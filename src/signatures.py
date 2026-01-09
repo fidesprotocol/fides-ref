@@ -153,10 +153,11 @@ def sign_record(
     """
     Sign a record and return a Signature object.
 
-    The signature is computed over the canonical serialization of the record.
+    The signature is computed over the canonical serialization of the record,
+    excluding the signatures field to avoid circular dependency.
     """
-    # Serialize the record canonically
-    record_bytes = canonical_serialize(record)
+    # Serialize the record canonically (excluding signatures)
+    record_bytes = canonical_serialize(record, exclude_signatures=True)
 
     # Sign
     sig_bytes = sign_data(private_key, record_bytes, algorithm)
@@ -185,13 +186,14 @@ def verify_signature(record, signature: Signature) -> bool:
     Verify a signature on a record.
 
     Returns True if the signature is valid for the record's canonical form.
+    Note: Signatures are excluded from canonical form to avoid circular dependency.
     """
     try:
         # Deserialize the public key
         public_key = base64_to_public_key(signature.public_key)
 
-        # Serialize the record canonically
-        record_bytes = canonical_serialize(record)
+        # Serialize the record canonically (excluding signatures)
+        record_bytes = canonical_serialize(record, exclude_signatures=True)
 
         # Decode the signature
         sig_bytes = base64.b64decode(signature.signature)

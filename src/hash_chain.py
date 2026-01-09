@@ -74,7 +74,7 @@ def _sort_keys_recursive(obj: Any) -> Any:
     return obj
 
 
-def canonical_serialize(record: Any) -> bytes:
+def canonical_serialize(record: Any, exclude_signatures: bool = False) -> bytes:
     """
     Serialize a record to canonical JSON bytes.
 
@@ -86,6 +86,10 @@ def canonical_serialize(record: Any) -> bytes:
     5. No trailing newline
     6. Numbers without unnecessary precision
     7. Dates in ISO 8601 format with UTC timezone (Z suffix)
+
+    Args:
+        record: The record to serialize
+        exclude_signatures: If True, exclude signatures field (for verification)
     """
     # Convert to dictionary if dataclass
     if is_dataclass(record) and not isinstance(record, type):
@@ -99,6 +103,10 @@ def canonical_serialize(record: Any) -> bytes:
     # (the hash itself, if present)
     obj.pop("hash", None)
     obj.pop("computed_fields", None)
+
+    # Exclude signatures if requested (for signature verification)
+    if exclude_signatures:
+        obj.pop("signatures", None)
 
     # Convert values to serializable format
     obj = _serialize_value(obj)

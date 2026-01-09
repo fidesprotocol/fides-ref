@@ -102,39 +102,31 @@ class TestComputeHash:
 class TestChainVerification:
     """Tests for hash chain verification."""
 
-    def create_mock_record(self, previous_hash: str) -> dict:
-        """Create a mock record with the given previous hash."""
-        return {
-            "decision_id": str(UUID("550e8400-e29b-41d4-a716-446655440000")),
-            "previous_record_hash": previous_hash,
-            "data": "test",
-        }
-
     def test_verify_chain_link_valid(self):
         """Test chain link verification with valid link."""
-
-        class MockRecord:
-            def __init__(self, prev_hash):
-                self.decision_id = UUID("550e8400-e29b-41d4-a716-446655440000")
-                self.previous_record_hash = prev_hash
-                self.data = "test"
-
-        prev_record = MockRecord(GENESIS_HASH)
+        prev_record = {
+            "decision_id": "550e8400-e29b-41d4-a716-446655440000",
+            "previous_record_hash": GENESIS_HASH,
+            "data": "test",
+        }
         prev_hash = compute_hash(prev_record)
-        current_record = MockRecord(prev_hash)
 
+        class CurrentRecord:
+            def __init__(self):
+                self.previous_record_hash = prev_hash
+
+        current_record = CurrentRecord()
         assert verify_chain_link(current_record, prev_record)
 
     def test_verify_chain_link_invalid(self):
         """Test chain link verification with broken link."""
+        prev_record = {"data": "test"}
 
-        class MockRecord:
-            def __init__(self, prev_hash):
-                self.previous_record_hash = prev_hash
+        class CurrentRecord:
+            def __init__(self):
+                self.previous_record_hash = "wrong_hash"
 
-        prev_record = MockRecord(GENESIS_HASH)
-        current_record = MockRecord("wrong_hash")
-
+        current_record = CurrentRecord()
         assert not verify_chain_link(current_record, prev_record)
 
     def test_verify_empty_chain(self):
@@ -149,12 +141,7 @@ class TestChainVerification:
 
     def test_compute_state_hash_deterministic(self):
         """Test state hash is deterministic."""
-
-        class MockRecord:
-            def __init__(self, data):
-                self.data = data
-
-        records = [MockRecord("a"), MockRecord("b")]
+        records = [{"data": "a"}, {"data": "b"}]
         hash1 = compute_state_hash(records)
         hash2 = compute_state_hash(records)
         assert hash1 == hash2
